@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block title %}User Page - Movie Recommender System{% endblock %}
+
+{% block content %}
+    <h1>User Page</h1>
+    
+    <div class="mt-3">
+        <label for="user-dropdown" class="form-label">Select a user:</label>
+        <select class="form-select" id="user-dropdown">
+            {% for user_id in range(1, 611) %}
+                <option value="{{ user_id }}">{{ user_id }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="mt-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button class="btn btn-primary" onclick="button_getUserHistory()">History</button>
+            </div>
+            <div class="col-md-6" style="text-align: right;">
+                <button class="btn btn-primary" onclick="button_getRecommendedFilms()">Recommended Films</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <h2 id="title"></h2>
+    </div>
+    
+    <div id="user-history" class="mt-3"></div>
+    
+    
+
+    <div id="loading" class="text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading...</p>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center mt-3">
+            <li class="page-item">
+                <button id="prev-button" class="page-link" onclick="prevPage()" disabled>Previous</button>
+            </li>
+            <li class="page-item">
+                <span id="page-count" class="page-link"></span>
+            </li>
+            <li class="page-item">
+                <button id="next-button" class="page-link" onclick="nextPage()" disabled>Next</button>
+            </li>
+        </ul>
+    </nav>
+    <script>
+        var movies = [];
+        var currentPage = 1;
+        var moviesPerPage = 4;
+        var chois=0;
+
+        function getUserHistory() {
+            chois=1;
+            var userId = document.getElementById("user-dropdown").value;
+            var userHistoryElement = document.getElementById("user-history");
+            var loadingElement = document.getElementById("loading");
+            var titleElement = document.getElementById("title");
+            var pageCountElement = document.getElementById("page-count");
+            var prevButton = document.getElementById("prev-button");
+            var nextButton = document.getElementById("next-button");
+
+            // Set the title
+            titleElement.innerText = "User History";
+
+            // Show loading screen
+            loadingElement.style.display = "block";
+            userHistoryElement.innerHTML = "";
+
+            // Fetch user history data
+            fetch('/user_history/' + userId)
+                .then(response => response.json())
+                .then(data => {
+                    // Update user history element with the fetched data
+                    movies = data.user_history;
+                    var totalMovies = movies.length;
+                    var totalPages = Math.ceil(totalMovies / moviesPerPage);
+
+                    // Enable/disable pagination buttons based on current page
+                    prevButton.disabled = currentPage === 1;
+                    nextButton.disabled = currentPage === totalPages;
+
+                    // Update page count
+                    pageCountElement.innerText = "Page " + currentPage + " of " + totalPages;
+
+                    // Generate movie HTML for the current page
+                    var startIndex = (currentPage - 1) * moviesPerPage;
+                    var endIndex = startIndex + moviesPerPage;
+                    var html = '';
+
+                    if (movies.length > 0) {
+                        for (var i = startIndex; i < endIndex && i < movies.length; i += 2) {
+                            html += '<div class="row">';
+                            html += '<div class="col-md-9">';
+                            html += generateMovieHtml(movies[i]);
+                            html += '</div>';
+
+                            if (i + 1 < movies.length) {
+                                html += '<div class="col-md-3">';
+                                html += generateMovieHtml(movies[i + 1]);
+                                html += '</div>';
+                            }
+
+                            html += '</div>';
+                        }
+                    } else {
+                        html = '<p>No user history available.</p>';
+                    }
+
+                    userHistoryElement.innerHTML = html;
+                    loadingElement.style.display = "none";
+                })
+                .catch(error => {
+                    console.log('Error:', error);
+                    loadingElement.style.display = "none";
+                });
+        }
+        function button_getUserHistory()
+        {
+            movies = [];
+            currentPage = 1;
+            moviesPerPage = 4;
+            chois=0;
+            getUserHistory();
+
+        }
+        function button_getRecommendedFilms()
+        {
+            movies = [];
+            currentPage = 1;
+            moviesPerPage = 4;
+            chois=0;
+            getRecommendedFilms();
+
+        }
+
+        function getRecommendedFilms() {
+            chois=2
+            var userId = document.getElementById("user-dropdown").value;
+            var userHistoryElement = document.getElementById("user-history");
+            var loadingElement = document.getElementById("loading");
+            var titleElement = document.getElementById("title");
+            var pageCountElement = document.getElementById("page-count");
+            var prevButton = document.getElementById("prev-button");
+            var nextButton = document.getElementById("next-button");
+
+            // Set the title
+            titleElement.innerText = "Recommended Films";
+
+            // Show loading screen
+            loadingElement.style.display = "block";
+            userHistoryElement.innerHTML = "";
+
+            // Fetch user history data
+            fetch('/user_recomand/' + userId)
+                .then(response => response.json())
+                .then(data => {
+                    // Update user history element with the fetched data
+                    movies = data.user_recomand;
+                    var totalMovies = movies.length;
+                    var totalPages = Math.ceil(totalMovies / moviesPerPage);
+
+                    // Enable/disable pagination buttons based on current page
+                    prevButton.disabled = currentPage === 1;
+                    nextButton.disabled = currentPage === totalPages;
+
+                    // Update page count
+                    pageCountElement.innerText = "Page " + currentPage + " of " + totalPages;
+
+                    // Generate movie HTML for the current page
+                    var startIndex = (currentPage - 1) * moviesPerPage;
+                    var endIndex = startIndex + moviesPerPage;
+                    var html = '';
+
+                    if (movies.length > 0) {
+                        for (var i = startIndex; i < endIndex && i < movies.length; i += 2) {
+                            html += '<div class="row">';
+                            html += '<div class="col-md-9">';
+                            html += recMovieHtml(movies[i]);
+                            html += '</div>';
+
+                            if (i + 1 < movies.length) {
+                                html += '<div class="col-md-3">';
+                                html += recMovieHtml(movies[i + 1]);
+                                html += '</div>';
+                            }
+
+                            html += '</div>';
+                        }
+                    } else {
+                        html = '<p>No user history available.</p>';
+                    }
+
+                    userHistoryElement.innerHTML = html;
+                    loadingElement.style.display = "none";
+                })
+                .catch(error => {
+                    console.log('Error:', error);
+                    loadingElement.style.display = "none";
+                });
+        }
+
+        function generateMovieHtml(movie) {
+            var html = '';
+            html += '<div class="movie">';
+            html += '<img src="' + movie.poster + '" alt="Movie Poster" width="200">';
+            html += '<div class="movie-details">';
+            html += '<h3>' + movie.title + '</h3>';
+            html += '<p>Rating: ' + movie.rating + '</p>';
+            html += '<p>Rating Date: ' + movie.timestamp + '</p>';
+            html += '<p>Tag: ' + movie.tag + '</p>';
+            html += '<p>Genres: ' + movie.genres + '</p>';
+            html += '</div>';
+            html += '</div>';
+            return html;
+        }
+
+        function recMovieHtml(movie) {
+            var html = '';
+            html += '<div class="movie">';
+            html += '<img src="' + movie.poster + '" alt="Movie Poster" width="200">';
+            html += '<div class="movie-details">';
+            html += '<h3>' + movie.title + '</h3>';
+            html += '<p>Expected Rating: ' + movie.rating + '</p>';
+            html += '</div>';
+            html += '</div>';
+            return html;
+        }
+
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                if (chois==1){getUserHistory();}
+                else{ getRecommendedFilms();}
+            }
+        }
+
+        function nextPage() {
+            var totalPages = Math.ceil(movies.length / moviesPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                if (chois==1){getUserHistory();}
+                else{ 
+                    getRecommendedFilms();
+                }
+               
+            }
+        }
+    </script>
+
+    <style>
+        .row {
+            margin-bottom: 20px;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background-color: black;
+            color: white;
+        }
+
+        .form-select {
+            width: 200px;
+        }
+
+        .form-control {
+            width: 200px;
+        }
+
+        .pagination {
+            text-align: center;
+        }
+
+        .pagination .page-link {
+            color: black;
+        }
+
+        .pagination .page-link:hover {
+            background-color: black;
+            color: white;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background-color: transparent;
+            color: black;
+            pointer-events: none;
+        }
+    </style>
+{% endblock %}
